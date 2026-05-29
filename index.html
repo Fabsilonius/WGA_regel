@@ -1,26 +1,27 @@
-<!DOCTYPE html>
+html = '''<!DOCTYPE html>
 <html lang="de" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Gründach Atlas Wilhelmsburg — v1</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script>
 <style>
   :root {
     --bg: #13131a; --surface: #1c1c26; --surface2: #23232f; --border: #2e2e3e;
     --text: #e0e0ee; --text-muted: #8888aa; --accent: #4f98a3;
     --green-high: #2d9e5f; --green-med: #7ec87a; --green-low: #c5e88a;
     --none-color: #3a3a4a; --slope-color: #e07b39; --filtered-color: #5b9bd5;
-    --radius: 8px; --font: 'Inter', system-ui, sans-serif;
+    --radius: 8px; --font: \'Inter\', system-ui, sans-serif;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: var(--font); background: var(--bg); color: var(--text); height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+  html, body { height: 100%; }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); display: flex; flex-direction: column; overflow: hidden; height: 100vh; }
 
   header {
     display: flex; align-items: center; justify-content: space-between;
     padding: 10px 16px; background: var(--surface); border-bottom: 1px solid var(--border);
-    z-index: 1000; flex-shrink: 0; gap: 12px;
+    z-index: 1000; flex-shrink: 0; gap: 12px; height: 50px;
   }
   .logo { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
   .logo h1 { font-size: 14px; font-weight: 600; }
@@ -29,7 +30,7 @@
   .badge { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; font-size: 11px; color: var(--text-muted); white-space: nowrap; }
   .badge.ok { border-color: var(--green-high); color: var(--green-high); }
 
-  .main { display: flex; flex: 1; overflow: hidden; }
+  .main { display: flex; flex: 1; overflow: hidden; min-height: 0; height: calc(100vh - 50px); }
 
   /* Sidebar */
   .sidebar {
@@ -65,7 +66,7 @@
   .toggle { position: relative; width: 30px; height: 17px; flex-shrink: 0; }
   .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
   .toggle-track { position: absolute; inset: 0; background: var(--border); border-radius: 17px; transition: 0.2s; cursor: pointer; }
-  .toggle-track::before { content: ''; position: absolute; width: 11px; height: 11px; border-radius: 50%; background: var(--text-muted); left: 3px; top: 3px; transition: 0.2s; }
+  .toggle-track::before { content: \'\'; position: absolute; width: 11px; height: 11px; border-radius: 50%; background: var(--text-muted); left: 3px; top: 3px; transition: 0.2s; }
   .toggle input:checked + .toggle-track { background: var(--accent); }
   .toggle input:checked + .toggle-track::before { transform: translateX(13px); background: white; }
 
@@ -81,8 +82,9 @@
   .stat-val { font-size: 18px; font-weight: 700; color: var(--accent); line-height: 1; }
   .stat-label { font-size: 9px; color: var(--text-muted); margin-top: 2px; }
 
-  /* Map */
-  #map { flex: 1; background: #1a1a22; }
+  /* Map wrapper + map */
+  .map-wrapper { position: relative; flex: 1; overflow: hidden; min-height: 0; }
+  #map { position: absolute; inset: 0; background: #1a1a22; }
 
   /* Info Panel */
   .info-panel {
@@ -153,35 +155,31 @@
     <!-- Basemap -->
     <div class="s-section">
       <h3>Hintergrundkarte</h3>
-
       <div class="layer-item">
         <div class="layer-left">
           <div class="layer-dot" style="background:#5b9bd5; border-radius:2px;"></div>
           <span class="layer-label">OSM Straßenkarte</span>
         </div>
         <label class="toggle">
-          <input type="radio" name="basemap" id="radio-osm" checked onchange="setBasemap('osm')">
+          <input type="radio" name="basemap" id="radio-osm" checked onchange="setBasemap(\'osm\')">
           <span class="toggle-track"></span>
         </label>
       </div>
-
       <div class="layer-item">
         <div class="layer-left">
           <div class="layer-dot" style="background:#7ec87a; border-radius:2px;"></div>
           <span class="layer-label">TrueDOP 2024 belaubt (LGV HH)</span>
         </div>
         <label class="toggle">
-          <input type="radio" name="basemap" id="radio-luft" onchange="setBasemap('luftbild')">
+          <input type="radio" name="basemap" id="radio-luft" onchange="setBasemap(\'luftbild\')">
           <span class="toggle-track"></span>
         </label>
       </div>
-
     </div>
 
     <!-- Dach-Layer -->
     <div class="s-section">
       <h3>Layer</h3>
-
       <div class="layer-item">
         <div class="layer-left">
           <div class="layer-dot" style="background:#555566;"></div>
@@ -189,11 +187,10 @@
           <span class="layer-count" id="c-alle">—</span>
         </div>
         <label class="toggle" onclick="event.stopPropagation()">
-          <input type="checkbox" id="tog-alle" checked onchange="toggleLayer('alle', this.checked)">
+          <input type="checkbox" id="tog-alle" checked onchange="toggleLayer(\'alle\', this.checked)">
           <span class="toggle-track"></span>
         </label>
       </div>
-
       <div class="layer-item">
         <div class="layer-left">
           <div class="layer-dot" style="background:var(--filtered-color);"></div>
@@ -201,13 +198,11 @@
           <span class="layer-count" id="c-gefiltert">—</span>
         </div>
         <label class="toggle" onclick="event.stopPropagation()">
-          <input type="checkbox" id="tog-gefiltert" onchange="toggleLayer('gefiltert', this.checked)">
+          <input type="checkbox" id="tog-gefiltert" onchange="toggleLayer(\'gefiltert\', this.checked)">
           <span class="toggle-track"></span>
         </label>
       </div>
-
       <div class="sep"></div>
-
       <div class="layer-item">
         <div class="layer-left">
           <div class="layer-dot" style="background:var(--green-high);"></div>
@@ -215,11 +210,10 @@
           <span class="layer-count" id="c-green">—</span>
         </div>
         <label class="toggle" onclick="event.stopPropagation()">
-          <input type="checkbox" id="tog-green" checked onchange="toggleLayer('green', this.checked)">
+          <input type="checkbox" id="tog-green" checked onchange="toggleLayer(\'green\', this.checked)">
           <span class="toggle-track"></span>
         </label>
       </div>
-
       <div class="layer-item">
         <div class="layer-left">
           <div class="layer-dot" style="background:var(--slope-color);"></div>
@@ -227,11 +221,10 @@
           <span class="layer-count" id="c-slope">—</span>
         </div>
         <label class="toggle" onclick="event.stopPropagation()">
-          <input type="checkbox" id="tog-slope" onchange="toggleLayer('slope', this.checked)">
+          <input type="checkbox" id="tog-slope" onchange="toggleLayer(\'slope\', this.checked)">
           <span class="toggle-track"></span>
         </label>
       </div>
-
       <div class="layer-item">
         <div class="layer-left">
           <div class="layer-dot" style="background:#c0392b;"></div>
@@ -239,11 +232,10 @@
           <span class="layer-count" id="c-baum">—</span>
         </div>
         <label class="toggle" onclick="event.stopPropagation()">
-          <input type="checkbox" id="tog-baum" onchange="toggleLayer('baum', this.checked)">
+          <input type="checkbox" id="tog-baum" onchange="toggleLayer(\'baum\', this.checked)">
           <span class="toggle-track"></span>
         </label>
       </div>
-
     </div>
 
     <!-- Legende -->
@@ -273,8 +265,8 @@
   </div><!-- /sidebar -->
 
   <!-- Map -->
-  <div style="position:relative; flex:1; overflow:hidden; display:flex; flex-direction:column;">
-    <div id="map" style="width:100%; flex:1;"></div>
+  <div class="map-wrapper">
+    <div id="map"></div>
 
     <!-- Info Panel -->
     <div class="info-panel" id="info-panel">
@@ -291,43 +283,47 @@
       <span id="loading-msg">Lade Daten…</span>
     </div>
   </div>
+
 </div><!-- /main -->
 
 <script>
 // ────────────────────────────────────────────────────────────────
 // MAP SETUP
 // ────────────────────────────────────────────────────────────────
-const map = L.map('map', { zoomControl: true, preferCanvas: true })
-  .setView([53.4975, 10.001], 16); // Wilhelmsburg
+const map = L.map(\'map\', { zoomControl: true, preferCanvas: true })
+  .setView([53.4975, 10.001], 16);
 
-// OSM
+// Leaflet invalidateSize fixes
+setTimeout(() => map.invalidateSize(), 100);
+setTimeout(() => map.invalidateSize(), 500);
+window.addEventListener(\'resize\', () => map.invalidateSize());
+window.addEventListener(\'load\',   () => { map.invalidateSize(); });
+
 const osmLayer = L.tileLayer(
-  'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-  { attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>', maxZoom: 20 }
+  \'https://tile.openstreetmap.org/{z}/{x}/{y}.png\',
+  { attribution: \'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>\', maxZoom: 20 }
 ).addTo(map);
 
-// Hamburg TrueDOP 2024 belaubt – LGV WMS-Zeitreihe (öffentlich, kein Key nötig)
-// Quelle: https://geodienste.hamburg.de/wms_dop_zeitreihe_belaubt
 const luftbildLayer = L.tileLayer.wms(
-  'https://geodienste.hamburg.de/wms_dop_zeitreihe_belaubt',
+  \'https://geodienste.hamburg.de/wms_dop_zeitreihe_belaubt\',
   {
-    layers: 'dop_zeitreihe_belaubt',
-    format: 'image/png',
+    layers: \'dop_zeitreihe_belaubt\',
+    format: \'image/png\',
     transparent: false,
-    version: '1.3.0',
-    time: '2024',
-    attribution: '© LGV Hamburg 2024',
+    version: \'1.3.0\',
+    time: \'2024\',
+    attribution: \'© LGV Hamburg 2024\',
     maxZoom: 20,
     tileSize: 512,
     crs: L.CRS.EPSG3857
   }
 );
 
-let currentBasemap = 'osm';
+let currentBasemap = \'osm\';
 
 function setBasemap(type) {
   if (type === currentBasemap) return;
-  if (type === 'luftbild') {
+  if (type === \'luftbild\') {
     map.removeLayer(osmLayer);
     luftbildLayer.addTo(map);
     luftbildLayer.bringToBack();
@@ -337,7 +333,6 @@ function setBasemap(type) {
     osmLayer.bringToBack();
   }
   currentBasemap = type;
-  // Dach-Layer über Basemap legen
   Object.values(layerGroups).forEach(lg => {
     if (map.hasLayer(lg)) { lg.bringToFront(); }
   });
@@ -363,28 +358,23 @@ function toggleLayer(name, on) {
 // FARBEN & STYLES
 // ────────────────────────────────────────────────────────────────
 function scoreColor(score) {
-  if (score > 60)  return '#2d9e5f';
-  if (score > 25)  return '#7ec87a';
-  if (score > 5)   return '#c5e88a';
-  return '#3a3a4a';
+  if (score > 60) return \'#2d9e5f\';
+  if (score > 25) return \'#7ec87a\';
+  if (score > 5)  return \'#c5e88a\';
+  return \'#3a3a4a\';
 }
-
-function getSlope(p) {
-  return parseFloat(p.dachneig ?? p.neigung_grad ?? p.slope_deg ?? 0);
-}
-function getArea(p) {
-  return parseFloat(p.area_m2 ?? p.dachfl_2d ?? 0);
-}
-function getBaum(p) {
+function getSlope(p) { return parseFloat(p.dachneig ?? p.neigung_grad ?? p.slope_deg ?? 0); }
+function getArea(p)  { return parseFloat(p.area_m2 ?? p.dachfl_2d ?? 0); }
+function getBaum(p)  {
   const v = p.baum_verdacht;
-  return v === true || v === 'true' || v === 1 || v === '1';
+  return v === true || v === \'true\' || v === 1 || v === \'1\';
 }
 function getSlopeClass(n) {
-  if (n <= 5)  return 'Sehr gut geeignet (0–5°)';
-  if (n <= 10) return 'Gut geeignet (5–10°)';
-  if (n <= 15) return 'Noch geeignet (10–15°)';
-  if (n <= 30) return 'Bedingt geeignet (15–30°)';
-  return 'Ungeeignet (>30°)';
+  if (n <= 5)  return \'Sehr gut geeignet (0–5°)\';
+  if (n <= 10) return \'Gut geeignet (5–10°)\';
+  if (n <= 15) return \'Noch geeignet (10–15°)\';
+  if (n <= 30) return \'Bedingt geeignet (15–30°)\';
+  return \'Ungeeignet (>30°)\';
 }
 
 // ────────────────────────────────────────────────────────────────
@@ -392,15 +382,15 @@ function getSlopeClass(n) {
 // ────────────────────────────────────────────────────────────────
 function greeningLabel(cls, score) {
   if (cls) {
-    const m = {'high':'Hoch','med':'Mittel','low':'Gering','none':'Keine Vegetation',
-               'stark':'Hoch','mittel':'Mittel','schwach':'Gering'};
+    const m = {\'high\':\'Hoch\',\'med\':\'Mittel\',\'low\':\'Gering\',\'none\':\'Keine Vegetation\',
+               \'stark\':\'Hoch\',\'mittel\':\'Mittel\',\'schwach\':\'Gering\'};
     if (m[cls]) return m[cls];
     return cls;
   }
-  if (score > 60) return 'Hoch';
-  if (score > 25) return 'Mittel';
-  if (score > 5)  return 'Gering';
-  return 'Keine Vegetation';
+  if (score > 60) return \'Hoch\';
+  if (score > 25) return \'Mittel\';
+  if (score > 5)  return \'Gering\';
+  return \'Keine Vegetation\';
 }
 
 function showInfo(p) {
@@ -409,26 +399,25 @@ function showInfo(p) {
   const area  = getArea(p);
   const baum  = getBaum(p);
   const col   = scoreColor(score);
-
-  document.getElementById('info-body').innerHTML = `
-    <div class="info-row"><span class="info-key">Gebäude-ID</span><span class="info-val">${p.gebaeude_id ?? p.dach_id ?? '—'}</span></div>
-    <div class="info-row"><span class="info-key">Fläche (2D)</span><span class="info-val">${area ? area.toFixed(1)+' m²' : '—'}</span></div>
-    <div class="info-row"><span class="info-key">Dachneigung</span><span class="info-val">${neig ? neig.toFixed(1)+'°' : '—'}</span></div>
+  document.getElementById(\'info-body\').innerHTML = `
+    <div class="info-row"><span class="info-key">Gebäude-ID</span><span class="info-val">${p.gebaeude_id ?? p.dach_id ?? \'—\'}</span></div>
+    <div class="info-row"><span class="info-key">Fläche (2D)</span><span class="info-val">${area ? area.toFixed(1)+\' m²\' : \'—\'}</span></div>
+    <div class="info-row"><span class="info-key">Dachneigung</span><span class="info-val">${neig ? neig.toFixed(1)+\'°\' : \'—\'}</span></div>
     <div class="info-row"><span class="info-key">Eignung</span><span class="info-val">${getSlopeClass(neig)}</span></div>
-    <div class="info-row"><span class="info-key">NDVI Coverage</span><span class="info-val">${p.ndvi_cov != null ? (p.ndvi_cov*100).toFixed(1)+'%' : '—'}</span></div>
-    <div class="info-row"><span class="info-key">NDVI Mittelwert</span><span class="info-val">${p.ndvi_mean != null ? parseFloat(p.ndvi_mean).toFixed(3) : '—'}</span></div>
+    <div class="info-row"><span class="info-key">NDVI Coverage</span><span class="info-val">${p.ndvi_cov != null ? (p.ndvi_cov*100).toFixed(1)+\'%\' : \'—\'}</span></div>
+    <div class="info-row"><span class="info-key">NDVI Mittelwert</span><span class="info-val">${p.ndvi_mean != null ? parseFloat(p.ndvi_mean).toFixed(3) : \'—\'}</span></div>
     <div class="info-row"><span class="info-key">Begrünungsklasse</span><span class="info-val">${greeningLabel(p.greening_class, score)}</span></div>
-    <div class="info-row"><span class="info-key">Baum-Verdacht</span><span class="info-val">${baum ? '⚠️ Ja' : '—'}</span></div>
+    <div class="info-row"><span class="info-key">Baum-Verdacht</span><span class="info-val">${baum ? \'⚠️ Ja\' : \'—\'}</span></div>
     <div class="score-wrap">
       <div class="score-label"><span>Begrünungsscore</span><strong>${score}</strong></div>
       <div class="score-bg"><div class="score-fill" style="width:${Math.min(score,100)}%; background:${col};"></div></div>
     </div>
   `;
-  document.getElementById('info-panel').classList.add('visible');
+  document.getElementById(\'info-panel\').classList.add(\'visible\');
 }
 
-function closeInfo() { document.getElementById('info-panel').classList.remove('visible'); }
-map.on('click', closeInfo);
+function closeInfo() { document.getElementById(\'info-panel\').classList.remove(\'visible\'); }
+map.on(\'click\', closeInfo);
 
 // ────────────────────────────────────────────────────────────────
 // GEOJSON VERARBEITEN
@@ -436,58 +425,35 @@ map.on('click', closeInfo);
 const loadedData = { alle: null, gefiltert: null, ndvi: null };
 let globalBounds = null;
 
-function fitToData() {
-  // Auf geladene Daten zoomen
-  const bounds = [];
-  ['alle','ndvi','gefiltert'].forEach(slot => {
-    if (loadedData[slot]) {
-      try {
-        const layer = L.geoJSON(loadedData[slot]);
-        const b = layer.getBounds();
-        if (b.isValid()) bounds.push(b);
-      } catch(e) {}
-    }
-  });
-  if (bounds.length > 0) {
-    let combined = bounds[0];
-    bounds.forEach(b => { combined = combined.extend(b); });
-    map.fitBounds(combined, { padding: [20, 20] });
-  }
-}
-
 function processAllSlots() {
-  // Layer leeren
   Object.values(layerGroups).forEach(lg => lg.clearLayers());
 
   let totalFeatures = 0, greenCount = 0, potCount = 0, scoreSum = 0, scoreN = 0;
 
-  // ── 1. ALLE DACHFLÄCHEN ──
   if (loadedData.alle) {
     const features = loadedData.alle.features || [];
     totalFeatures = Math.max(totalFeatures, features.length);
     features.forEach(f => {
       const p = f.properties || {};
       addToLayer(f, layerGroups.alle,
-        { color:'#555566', weight:0.5, fillColor:'#2a2a38', fillOpacity:0.4 }, p);
+        { color:\'#555566\', weight:0.5, fillColor:\'#2a2a38\', fillOpacity:0.4 }, p);
     });
-    document.getElementById('c-alle').textContent = features.length;
+    document.getElementById(\'c-alle\').textContent = features.length;
     try { globalBounds = L.geoJSON(loadedData.alle).getBounds(); } catch(e) {}
   }
 
-  // ── 2. GEFILTERTE DACHFLÄCHEN ──
   if (loadedData.gefiltert) {
     const features = loadedData.gefiltert.features || [];
     potCount = features.length;
     features.forEach(f => {
       const p = f.properties || {};
       addToLayer(f, layerGroups.gefiltert,
-        { color:'#5b9bd5', weight:1, fillColor:'#5b9bd5', fillOpacity:0.4 }, p);
+        { color:\'#5b9bd5\', weight:1, fillColor:\'#5b9bd5\', fillOpacity:0.4 }, p);
     });
-    document.getElementById('c-gefiltert').textContent = features.length;
+    document.getElementById(\'c-gefiltert\').textContent = features.length;
     if (!globalBounds) try { globalBounds = L.geoJSON(loadedData.gefiltert).getBounds(); } catch(e) {}
   }
 
-  // ── 3. NDVI / SCORE ──
   if (loadedData.ndvi) {
     const features = loadedData.ndvi.features || [];
     if (!totalFeatures) totalFeatures = features.length;
@@ -502,57 +468,52 @@ function processAllSlots() {
 
       scoreSum += score; scoreN++;
 
-      // Gefiltert aus NDVI-Datei (falls keine separate Datei geladen)
       if (!loadedData.gefiltert && area > 10 && neig < 30) {
         potCount++;
         addToLayer(f, layerGroups.gefiltert,
-          { color:'#5b9bd5', weight:1, fillColor:'#5b9bd5', fillOpacity:0.4 }, p);
+          { color:\'#5b9bd5\', weight:1, fillColor:\'#5b9bd5\', fillOpacity:0.4 }, p);
       }
 
-      // Begrünungslayer
       if (score > 5 && !baum) {
         greenCount++;
         addToLayer(f, layerGroups.green,
           { color: scoreColor(score), weight: 0.8, fillColor: scoreColor(score), fillOpacity: 0.75 }, p);
       }
 
-      // Neigung 20–30°
       if (neig >= 20 && neig <= 30) {
         slopeCount++;
         addToLayer(f, layerGroups.slope,
-          { color:'#e07b39', weight:1, fillColor:'#e07b39', fillOpacity:0.5 }, p);
+          { color:\'#e07b39\', weight:1, fillColor:\'#e07b39\', fillOpacity:0.5 }, p);
       }
 
-      // Baum-Verdacht
       if (baum) {
         baumCount++;
         addToLayer(f, layerGroups.baum,
-          { color:'#c0392b', weight:1, fillColor:'#c0392b', fillOpacity:0.55 }, p);
+          { color:\'#c0392b\', weight:1, fillColor:\'#c0392b\', fillOpacity:0.55 }, p);
       }
     });
 
-    document.getElementById('c-green').textContent  = greenCount;
-    document.getElementById('c-slope').textContent  = slopeCount;
-    document.getElementById('c-baum').textContent   = baumCount;
-    if (!loadedData.gefiltert) document.getElementById('c-gefiltert').textContent = potCount;
-
+    document.getElementById(\'c-green\').textContent = greenCount;
+    document.getElementById(\'c-slope\').textContent = slopeCount;
+    document.getElementById(\'c-baum\').textContent  = baumCount;
+    if (!loadedData.gefiltert) document.getElementById(\'c-gefiltert\').textContent = potCount;
     if (!globalBounds) try { globalBounds = L.geoJSON(loadedData.ndvi).getBounds(); } catch(e) {}
   }
 
-  // Statistiken
-  document.getElementById('s-total').textContent = totalFeatures || '—';
-  document.getElementById('s-green').textContent = greenCount   || '—';
-  document.getElementById('s-pot').textContent   = potCount     || '—';
-  document.getElementById('s-score').textContent = scoreN > 0 ? (scoreSum/scoreN).toFixed(1) : '—';
+  document.getElementById(\'s-total\').textContent = totalFeatures || \'—\';
+  document.getElementById(\'s-green\').textContent = greenCount   || \'—\';
+  document.getElementById(\'s-pot\').textContent   = potCount     || \'—\';
+  document.getElementById(\'s-score\').textContent = scoreN > 0 ? (scoreSum/scoreN).toFixed(1) : \'—\';
 
-  document.getElementById('badge-total').textContent = totalFeatures + ' Objekte';
-  document.getElementById('badge-green').textContent = greenCount + ' begrünt';
+  document.getElementById(\'badge-total\').textContent = totalFeatures + \' Objekte\';
+  document.getElementById(\'badge-green\').textContent = greenCount + \' begrünt\';
 
   if (globalBounds && globalBounds.isValid()) {
+    map.invalidateSize();
     map.fitBounds(globalBounds, { padding: [24, 24] });
   }
 
-  document.getElementById('loading').style.display = 'none';
+  document.getElementById(\'loading\').style.display = \'none\';
 }
 
 function addToLayer(feature, layerGroup, style, props) {
@@ -560,49 +521,46 @@ function addToLayer(feature, layerGroup, style, props) {
     L.geoJSON(feature, {
       style: () => style,
       onEachFeature: (f, layer) => {
-        layer.on('click', (e) => {
-          L.DomEvent.stopPropagation(e);
-          showInfo(f.properties || {});
-        });
-        layer.on('mouseover', () => { layer.setStyle({ weight: style.weight + 1, fillOpacity: Math.min((style.fillOpacity||0.5)+0.15, 1) }); });
-        layer.on('mouseout',  () => { layer.setStyle(style); });
+        layer.on(\'click\', (e) => { L.DomEvent.stopPropagation(e); showInfo(f.properties || {}); });
+        layer.on(\'mouseover\', () => { layer.setStyle({ weight: style.weight + 1, fillOpacity: Math.min((style.fillOpacity||0.5)+0.15, 1) }); });
+        layer.on(\'mouseout\',  () => { layer.setStyle(style); });
       }
     }).addTo(layerGroup);
   } catch(e) {}
 }
 
 // ────────────────────────────────────────────────────────────────
-// BACKEND: DATEN AUS data/ ORDNER LADEN
+// DATEN LADEN
 // ────────────────────────────────────────────────────────────────
 function setDataStatus(id, status) {
-  const dot = document.querySelector('#ds-' + id + ' .ds-dot');
-  const lbl = document.querySelector('#ds-' + id + ' .ds-label');
+  const dot = document.querySelector(\'#ds-\' + id + \' .ds-dot\');
+  const lbl = document.querySelector(\'#ds-\' + id + \' .ds-label\');
   if (!dot) return;
-  dot.className = 'ds-dot ' + status;
-  if (status === 'ok') lbl.style.color = 'var(--text)';
-  if (status === 'err') lbl.style.color = '#c0392b';
+  dot.className = \'ds-dot \' + status;
+  if (status === \'ok\')  lbl.style.color = \'var(--text)\';
+  if (status === \'err\') lbl.style.color = \'#c0392b\';
 }
 
 async function loadFromBackend() {
-  document.getElementById('loading').style.display = 'flex';
-  document.getElementById('loading-msg').textContent = 'Lade Daten…';
+  document.getElementById(\'loading\').style.display = \'flex\';
+  document.getElementById(\'loading-msg\').textContent = \'Lade Daten…\';
 
   const files = [
-    { url: './data/dachflaechen.geojson',        slot: 'alle' },
-    { url: './data/dachflaechen_gefiltert.geojson', slot: 'gefiltert' },
-    { url: './data/dachflaechen_ndvi.geojson',   slot: 'ndvi' }
+    { url: \'data/dachflaechen.geojson\',          slot: \'alle\' },
+    { url: \'data/dachflaechen_gefiltert.geojson\', slot: \'gefiltert\' },
+    { url: \'data/dachflaechen_ndvi.geojson\',      slot: \'ndvi\' }
   ];
 
   for (const f of files) {
     try {
       const res = await fetch(f.url);
-      if (!res.ok) throw new Error('HTTP ' + res.status);
+      if (!res.ok) throw new Error(\'HTTP \' + res.status);
       const gj = await res.json();
       loadedData[f.slot] = gj;
-      setDataStatus(f.slot, 'ok');
+      setDataStatus(f.slot, \'ok\');
     } catch(e) {
-      setDataStatus(f.slot, 'err');
-      console.warn('Konnte ' + f.url + ' nicht laden:', e.message);
+      setDataStatus(f.slot, \'err\');
+      console.warn(\'Konnte \' + f.url + \' nicht laden:\', e.message);
     }
   }
 
@@ -610,6 +568,18 @@ async function loadFromBackend() {
 }
 
 loadFromBackend();
-</script>
+<\/script>
 </body>
-</html>
+</html>'''
+
+import os
+os.makedirs('/home/user/gruendach_v1', exist_ok=True)
+with open('/home/user/gruendach_v1/index.html', 'w') as f:
+    f.write(html)
+
+print("Gespeichert, Länge:", len(html))
+print("map-wrapper:", 'map-wrapper' in html)
+print("position:absolute; inset:0:", 'position: absolute; inset: 0' in html or 'position:absolute; inset:0' in html)
+print("invalidateSize count:", html.count('invalidateSize'))
+print("100vh - 50px:", 'calc(100vh - 50px)' in html)
+print("data/ Pfad:", "'data/dachflaechen.geojson'" in html)
