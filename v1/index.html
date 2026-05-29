@@ -43,22 +43,14 @@
   .s-section { padding: 12px 14px; border-bottom: 1px solid var(--border); }
   .s-section h3 { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 10px; }
 
-  /* Upload */
-  .upload-zone {
-    border: 1.5px dashed var(--border); border-radius: var(--radius);
-    padding: 10px; text-align: center; cursor: pointer; transition: 0.2s;
-    font-size: 11px; color: var(--text-muted);
-  }
-  .upload-zone:hover { border-color: var(--accent); background: rgba(79,152,163,0.06); }
-  .upload-zone.loaded { border-color: var(--green-high); border-style: solid; color: var(--green-high); }
-  .upload-zone input { display: none; }
-  .upload-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
-  .upload-slot { border: 1.5px dashed var(--border); border-radius: 6px; padding: 8px 4px; text-align: center; cursor: pointer; transition: 0.2s; font-size: 10px; color: var(--text-muted); }
-  .upload-slot:hover { border-color: var(--accent); }
-  .upload-slot.loaded { border-color: var(--green-high); color: var(--green-high); border-style: solid; }
-  .upload-slot input { display: none; }
-  .upload-slot .slot-icon { font-size: 16px; display: block; margin-bottom: 3px; }
-  .upload-slot .slot-name { font-size: 9px; line-height: 1.2; }
+  /* Datenstatus */
+  .data-status-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 11px; }
+  .ds-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .ds-dot.loading { background: var(--text-muted); animation: pulse 1.4s ease-in-out infinite; }
+  .ds-dot.ok { background: var(--green-high); }
+  .ds-dot.err { background: #c0392b; }
+  .ds-label { color: var(--text-muted); }
+  @keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
 
   /* Layer items */
   .layer-item {
@@ -148,32 +140,13 @@
 <div class="main">
   <div class="sidebar">
 
-    <!-- Datei-Upload: 3 Slots -->
+    <!-- Datenstatus -->
     <div class="s-section">
-      <h3>GeoJSON Dateien laden</h3>
-      <div class="upload-grid">
-
-        <label class="upload-slot" id="slot-alle">
-          <input type="file" accept=".geojson,.json" data-slot="alle">
-          <span class="slot-icon">🏘️</span>
-          <span class="slot-name">Alle Dächer</span>
-        </label>
-
-        <label class="upload-slot" id="slot-gefiltert">
-          <input type="file" accept=".geojson,.json" data-slot="gefiltert">
-          <span class="slot-icon">🔷</span>
-          <span class="slot-name">Gefiltert &gt;10m²</span>
-        </label>
-
-        <label class="upload-slot" id="slot-ndvi">
-          <input type="file" accept=".geojson,.json" data-slot="ndvi">
-          <span class="slot-icon">🌿</span>
-          <span class="slot-name">NDVI Score</span>
-        </label>
-
-      </div>
-      <div style="font-size:10px; color:var(--text-muted); margin-top:8px; line-height:1.4;">
-        Du kannst eine oder mehrere Dateien laden. Mindestens NDVI-Datei für Begrünungslayer.
+      <h3>Datensätze</h3>
+      <div id="data-status">
+        <div class="data-status-row" id="ds-alle"><span class="ds-dot loading"></span><span class="ds-label">Alle Dachflächen</span></div>
+        <div class="data-status-row" id="ds-gefiltert"><span class="ds-dot loading"></span><span class="ds-label">Potentialflächen</span></div>
+        <div class="data-status-row" id="ds-ndvi"><span class="ds-dot loading"></span><span class="ds-label">NDVI / Gründach</span></div>
       </div>
     </div>
 
@@ -224,7 +197,7 @@
       <div class="layer-item">
         <div class="layer-left">
           <div class="layer-dot" style="background:var(--filtered-color);"></div>
-          <span class="layer-label">Gefiltert &gt;10m² &lt;30°</span>
+          <span class="layer-label">Potentialflächen: 0–30° &gt;10m²</span>
           <span class="layer-count" id="c-gefiltert">—</span>
         </div>
         <label class="toggle" onclick="event.stopPropagation()">
@@ -238,7 +211,7 @@
       <div class="layer-item">
         <div class="layer-left">
           <div class="layer-dot" style="background:var(--green-high);"></div>
-          <span class="layer-label">Begrünungsscore (NDVI)</span>
+          <span class="layer-label">Gründach</span>
           <span class="layer-count" id="c-green">—</span>
         </div>
         <label class="toggle" onclick="event.stopPropagation()">
@@ -262,7 +235,7 @@
       <div class="layer-item">
         <div class="layer-left">
           <div class="layer-dot" style="background:#c0392b;"></div>
-          <span class="layer-label">Baum-Verdacht</span>
+          <span class="layer-label">Unklar</span>
           <span class="layer-count" id="c-baum">—</span>
         </div>
         <label class="toggle" onclick="event.stopPropagation()">
@@ -276,14 +249,14 @@
     <!-- Legende -->
     <div class="s-section">
       <h3>Legende</h3>
-      <div class="legend-row"><div class="legend-swatch" style="background:var(--green-high);"></div>Stark begrünt (&gt;60)</div>
+      <div class="legend-row"><div class="legend-swatch" style="background:var(--green-high);"></div>Hoch begrünt (&gt;60)</div>
       <div class="legend-row"><div class="legend-swatch" style="background:var(--green-med);"></div>Mittel begrünt (25–60)</div>
-      <div class="legend-row"><div class="legend-swatch" style="background:var(--green-low);"></div>Schwach begrünt (5–25)</div>
+      <div class="legend-row"><div class="legend-swatch" style="background:var(--green-low);"></div>Gering begrünt (5–25)</div>
       <div class="legend-row"><div class="legend-swatch" style="background:var(--none-color); border:1px solid #555;"></div>Keine Vegetation (≤5)</div>
       <div style="height:4px;"></div>
       <div class="legend-row"><div class="legend-swatch" style="background:var(--filtered-color);"></div>Potenzialfläche &gt;10m²</div>
       <div class="legend-row"><div class="legend-swatch" style="background:var(--slope-color);"></div>Neigung 20–30°</div>
-      <div class="legend-row"><div class="legend-swatch" style="background:#c0392b;"></div>Baum-Verdacht</div>
+      <div class="legend-row"><div class="legend-swatch" style="background:#c0392b;"></div>Unklar (Baumverdacht)</div>
     </div>
 
     <!-- Stats -->
@@ -417,6 +390,19 @@ function getSlopeClass(n) {
 // ────────────────────────────────────────────────────────────────
 // INFO PANEL
 // ────────────────────────────────────────────────────────────────
+function greeningLabel(cls, score) {
+  if (cls) {
+    const m = {'high':'Hoch','med':'Mittel','low':'Gering','none':'Keine Vegetation',
+               'stark':'Hoch','mittel':'Mittel','schwach':'Gering'};
+    if (m[cls]) return m[cls];
+    return cls;
+  }
+  if (score > 60) return 'Hoch';
+  if (score > 25) return 'Mittel';
+  if (score > 5)  return 'Gering';
+  return 'Keine Vegetation';
+}
+
 function showInfo(p) {
   const score = parseFloat(p.greening_score) || 0;
   const neig  = getSlope(p);
@@ -428,11 +414,11 @@ function showInfo(p) {
     <div class="info-row"><span class="info-key">Gebäude-ID</span><span class="info-val">${p.gebaeude_id ?? p.dach_id ?? '—'}</span></div>
     <div class="info-row"><span class="info-key">Fläche (2D)</span><span class="info-val">${area ? area.toFixed(1)+' m²' : '—'}</span></div>
     <div class="info-row"><span class="info-key">Dachneigung</span><span class="info-val">${neig ? neig.toFixed(1)+'°' : '—'}</span></div>
-    <div class="info-row"><span class="info-key">NRW-Eignung</span><span class="info-val">${getSlopeClass(neig)}</span></div>
+    <div class="info-row"><span class="info-key">Eignung</span><span class="info-val">${getSlopeClass(neig)}</span></div>
     <div class="info-row"><span class="info-key">NDVI Coverage</span><span class="info-val">${p.ndvi_cov != null ? (p.ndvi_cov*100).toFixed(1)+'%' : '—'}</span></div>
     <div class="info-row"><span class="info-key">NDVI Mittelwert</span><span class="info-val">${p.ndvi_mean != null ? parseFloat(p.ndvi_mean).toFixed(3) : '—'}</span></div>
-    <div class="info-row"><span class="info-key">Begrünungsklasse</span><span class="info-val">${p.greening_class ?? '—'}</span></div>
-    <div class="info-row"><span class="info-key">Baum-Verdacht</span><span class="info-val">${baum ? '⚠️ Ja' : '✅ Nein'}</span></div>
+    <div class="info-row"><span class="info-key">Begrünungsklasse</span><span class="info-val">${greeningLabel(p.greening_class, score)}</span></div>
+    <div class="info-row"><span class="info-key">Baum-Verdacht</span><span class="info-val">${baum ? '⚠️ Ja' : '—'}</span></div>
     <div class="score-wrap">
       <div class="score-label"><span>Begrünungsscore</span><strong>${score}</strong></div>
       <div class="score-bg"><div class="score-fill" style="width:${Math.min(score,100)}%; background:${col};"></div></div>
@@ -567,39 +553,44 @@ function addToLayer(feature, layerGroup, style, props) {
 }
 
 // ────────────────────────────────────────────────────────────────
-// FILE UPLOAD
+// BACKEND: DATEN AUS data/ ORDNER LADEN
 // ────────────────────────────────────────────────────────────────
-function readGeoJSON(file, slotName, callback) {
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const gj = JSON.parse(e.target.result);
-      loadedData[slotName] = gj;
-      document.getElementById('slot-' + slotName).classList.add('loaded');
-      document.getElementById('slot-' + slotName).querySelector('.slot-name').textContent =
-        '✓ ' + file.name.replace('.geojson','').slice(0,14);
-      callback();
-    } catch(err) {
-      alert('Fehler in ' + file.name + ': ' + err.message);
-    }
-  };
-  reader.readAsText(file);
+function setDataStatus(id, status) {
+  const dot = document.querySelector('#ds-' + id + ' .ds-dot');
+  const lbl = document.querySelector('#ds-' + id + ' .ds-label');
+  if (!dot) return;
+  dot.className = 'ds-dot ' + status;
+  if (status === 'ok') lbl.style.color = 'var(--text)';
+  if (status === 'err') lbl.style.color = '#c0392b';
 }
 
-document.querySelectorAll('.upload-slot input').forEach(input => {
-  input.addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const slot = this.dataset.slot;
-    document.getElementById('loading').style.display = 'flex';
-    document.getElementById('loading-msg').textContent = 'Lade ' + file.name + '…';
-    setTimeout(() => {
-      readGeoJSON(file, slot, () => {
-        processAllSlots();
-      });
-    }, 30);
-  });
-});
+async function loadFromBackend() {
+  document.getElementById('loading').style.display = 'flex';
+  document.getElementById('loading-msg').textContent = 'Lade Daten…';
+
+  const files = [
+    { url: '../data/dachflaechen.geojson',        slot: 'alle' },
+    { url: '../data/dachflaechen_gefiltert.geojson', slot: 'gefiltert' },
+    { url: '../data/dachflaechen_ndvi.geojson',   slot: 'ndvi' }
+  ];
+
+  for (const f of files) {
+    try {
+      const res = await fetch(f.url);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const gj = await res.json();
+      loadedData[f.slot] = gj;
+      setDataStatus(f.slot, 'ok');
+    } catch(e) {
+      setDataStatus(f.slot, 'err');
+      console.warn('Konnte ' + f.url + ' nicht laden:', e.message);
+    }
+  }
+
+  processAllSlots();
+}
+
+loadFromBackend();
 </script>
 </body>
 </html>
